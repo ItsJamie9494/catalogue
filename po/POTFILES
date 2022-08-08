@@ -1,0 +1,4 @@
+data/dev.itsjamie.Catalogue.desktop.in
+data/dev.itsjamie.Catalogue.appdata.xml.in
+data/dev.itsjamie.Catalogue.gschema.xml
+src/window.ui
