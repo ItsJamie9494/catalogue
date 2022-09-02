@@ -94,6 +94,7 @@ impl CatalogueApplication {
         glib::Object::new(&[
             ("application-id", &Some(APP_ID)),
             ("flags", &gio::ApplicationFlags::empty()),
+            ("resource-base-path", &"/dev/itsjamie/Catalogue"),
         ])
         .expect("Failed to create CatalogueApplication")
     }
