@@ -24,7 +24,10 @@ mod application;
 #[rustfmt::skip]
 mod config;
 mod macros;
+mod widgets;
 mod window;
+
+use std::env;
 
 use self::application::CatalogueApplication;
 use self::window::CatalogueWindow;
@@ -32,6 +35,7 @@ use self::window::CatalogueWindow;
 use config::{GETTEXT_PACKAGE, LOCALEDIR, RESOURCES_FILE};
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, gettext, textdomain};
 use gtk::{gio, glib};
+use log::error;
 
 fn main() {
     pretty_env_logger::init();
@@ -43,7 +47,24 @@ fn main() {
 
     glib::set_application_name(&gettext("Catalogue"));
 
-    let resources = gio::Resource::load(RESOURCES_FILE).expect("Could not load resources");
+    let resources = match env::var("MESON_DEVENV") {
+        Err(_) => gio::Resource::load(RESOURCES_FILE).expect("Could not load resources"),
+        Ok(_) => match env::current_exe() {
+            Ok(path) => {
+                let mut resource_path = path;
+                resource_path.pop();
+                resource_path.pop();
+                resource_path.push("data");
+                resource_path.push("resources.gresource");
+                gio::Resource::load(&resource_path)
+                    .expect("Unable to find resources.gresource in devenv")
+            }
+            Err(err) => {
+                error!("Unable to find the current path: {}", err);
+                return;
+            }
+        },
+    };
     gio::resources_register(&resources);
 
     let app = CatalogueApplication::new();
