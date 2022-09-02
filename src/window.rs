@@ -30,8 +30,6 @@ mod imp {
     #[template(resource = "/dev/itsjamie/Catalogue/window.ui")]
     pub struct CatalogueWindow {
         #[template_child]
-        pub header_bar: TemplateChild<gtk::HeaderBar>,
-        #[template_child]
         pub label: TemplateChild<gtk::Label>,
 
         pub settings: gio::Settings,
@@ -40,7 +38,6 @@ mod imp {
     impl Default for CatalogueWindow {
         fn default() -> Self {
             Self {
-                header_bar: TemplateChild::default(),
                 label: TemplateChild::default(),
                 settings: gio::Settings::new(APP_ID),
             }
