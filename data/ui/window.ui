@@ -72,9 +72,7 @@
                     <property name="name">Explore</property>
                     <property name="title" translatable="yes">Explore</property>
                     <property name="child">
-                      <object class="GtkLabel" id="label">
-                        <property name="label">nya!</property>
-                      </object>
+                      <object class="CatalogueCarousel" />
                     </property>
                   </object>
                 </child>

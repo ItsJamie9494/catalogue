@@ -1,3 +1,7 @@
 .sidebar {
     border-right-width: 0;
 }
+
+.featured-tile {
+    background: @view_bg_color;
+}
