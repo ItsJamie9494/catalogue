@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+/// Create a new SimpleAction
 #[macro_export]
 macro_rules! action {
     ($actions_group:expr, $name:expr, $callback:expr) => {{
@@ -30,4 +31,20 @@ macro_rules! action {
         simple_action.connect_activate($callback);
         $actions_group.add_action(&simple_action);
     }};
+}
+
+/// Create a new AppStream category
+#[macro_export]
+macro_rules! create_category {
+    ($name:expr, $icon:expr, ( $( $group:expr ),* )) => {
+        {
+            let temp_cat = Category::new();
+            temp_cat.set_name($name);
+            temp_cat.set_icon(&format!("{}-symbolic", $icon));
+            $(
+                temp_cat.add_desktop_group($group);
+            )*
+            temp_cat
+        }
+    };
 }

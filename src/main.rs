@@ -23,6 +23,7 @@ extern crate pretty_env_logger;
 mod application;
 #[rustfmt::skip]
 mod config;
+mod core;
 mod macros;
 mod widgets;
 mod window;
