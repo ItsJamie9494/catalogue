@@ -19,23 +19,32 @@
  */
 
 use adw::subclass::prelude::*;
+use appstream::Category;
 use gtk::{gio, glib, prelude::*, CompositeTemplate};
 
 use crate::config::{APP_ID, PROFILE};
+use crate::widgets::category_tile::CategoryTile;
 
 mod imp {
+    use gtk::{gio::Settings, FlowBox};
+
+    use crate::core::category::CatalogueCategories;
+
     use super::*;
 
     #[derive(Debug, CompositeTemplate)]
     #[template(resource = "/dev/itsjamie/Catalogue/window.ui")]
     pub struct CatalogueWindow {
-        pub settings: gio::Settings,
+        #[template_child]
+        pub featured: TemplateChild<FlowBox>,
+        pub settings: Settings,
     }
 
     impl Default for CatalogueWindow {
         fn default() -> Self {
             Self {
-                settings: gio::Settings::new(APP_ID),
+                featured: TemplateChild::default(),
+                settings: Settings::new(APP_ID),
             }
         }
     }
@@ -62,6 +71,13 @@ mod imp {
             if PROFILE == "Devel" {
                 obj.add_css_class("devel");
             }
+
+            obj.load_category_tile(CatalogueCategories::default().create);
+            obj.load_category_tile(CatalogueCategories::default().work);
+            obj.load_category_tile(CatalogueCategories::default().games);
+            obj.load_category_tile(CatalogueCategories::default().internet);
+            obj.load_category_tile(CatalogueCategories::default().develop);
+            obj.load_category_tile(CatalogueCategories::default().accessories);
 
             obj.load_window_size();
         }
@@ -118,5 +134,15 @@ impl CatalogueWindow {
         if is_maximized {
             self.maximize();
         }
+    }
+
+    fn load_category_tile(&self, category: Category) {
+        let btn = CategoryTile::new(category);
+
+        btn.connect_clicked(|_| {
+            println!("nya button clicked");
+        });
+
+        self.imp().featured.append(&btn);
     }
 }
