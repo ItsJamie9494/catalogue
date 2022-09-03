@@ -1,11 +1,3 @@
-.sidebar {
-    border-right-width: 0;
-}
-
-.featured-tile {
-    background: @view_bg_color;
-}
-
 .tile-accessories {
     background-color: #F8D8E2;
     color: #90183D;

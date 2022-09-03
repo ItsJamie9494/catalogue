@@ -4,8 +4,16 @@
     <file preprocess="xml-stripblanks" alias="window.ui">ui/window.ui</file>
     <file preprocess="xml-stripblanks" alias="carousel.ui">ui/carousel.ui</file>
     <file preprocess="xml-stripblanks" alias="carousel-tile.ui">ui/carousel-tile.ui</file>
+    <file preprocess="xml-stripblanks" alias="category-tile.ui">ui/category-tile.ui</file>
     <file alias="style.css">style/style.css</file>
+    <file alias="style-dark.css">style/style-dark.css</file>
 
     <file preprocess="xml-stripblanks">icons/scalable/actions/view-sidebar-start-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-accessories-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-development-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-games-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-graphics-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-internet-symbolic.svg</file>
+    <file preprocess="xml-stripblanks">icons/scalable/actions/application-office-symbolic.svg</file>
   </gresource>
 </gresources>

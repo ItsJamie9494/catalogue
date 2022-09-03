@@ -20,3 +20,4 @@
 
 //pub mod stack_switcher;
 pub mod carousel;
+pub mod category_tile;

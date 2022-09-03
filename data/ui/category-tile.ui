@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+    <requires lib="gtk" version="4.0" />
+    <requires lib="Adw" version="1.0" />
+    <template class="CatalogueCategoryTile" parent="GtkButton">
+        <style>
+            <class name="featured-tile" />
+            <class name="card" />
+        </style>
+        <child>
+            <object class="GtkBox" id="box">
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="orientation">horizontal</property>
+                <property name="spacing">12</property>
+                <property name="margin-top">24</property>
+                <property name="margin-bottom">24</property>
+                <property name="margin-start">6</property>
+                <property name="margin-end">6</property>
+                <property name="hexpand">1</property>
+                <child>
+                    <object class="GtkImage" id="category_icon">
+                        <property name="pixel_size">24</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel" id="category_label">
+                        <property name="ellipsize">end</property>
+                        <property name="lines">1</property>
+                        <style>
+                            <class name="title-4" />
+                        </style>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </template>
+</interface>
