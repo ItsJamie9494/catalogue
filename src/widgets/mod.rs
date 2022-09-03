@@ -18,4 +18,5 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// pub mod stack_sidebar;
+//pub mod stack_switcher;
+pub mod carousel;

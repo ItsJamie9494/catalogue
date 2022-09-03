@@ -31,6 +31,8 @@ use crate::CatalogueWindow;
 use log::{debug, info};
 
 mod imp {
+    use crate::widgets::carousel::{Carousel, CarouselTile};
+
     use super::*;
     use glib::WeakRef;
     use once_cell::sync::OnceCell;
@@ -47,7 +49,14 @@ mod imp {
         type ParentType = adw::Application;
     }
 
-    impl ObjectImpl for CatalogueApplication {}
+    impl ObjectImpl for CatalogueApplication {
+        fn constructed(&self, obj: &Self::Type) {
+            self.parent_constructed(obj);
+
+            Carousel::ensure_type();
+            CarouselTile::ensure_type();
+        }
+    }
     impl ApplicationImpl for CatalogueApplication {
         fn activate(&self, app: &Self::Type) {
             debug!("AdwApplication<CatalogueApplication>::activate");

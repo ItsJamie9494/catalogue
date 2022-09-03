@@ -29,16 +29,12 @@ mod imp {
     #[derive(Debug, CompositeTemplate)]
     #[template(resource = "/dev/itsjamie/Catalogue/window.ui")]
     pub struct CatalogueWindow {
-        #[template_child]
-        pub label: TemplateChild<gtk::Label>,
-
         pub settings: gio::Settings,
     }
 
     impl Default for CatalogueWindow {
         fn default() -> Self {
             Self {
-                label: TemplateChild::default(),
                 settings: gio::Settings::new(APP_ID),
             }
         }
