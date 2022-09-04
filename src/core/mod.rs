@@ -19,3 +19,4 @@
  */
 
 pub mod category;
+pub mod package;
