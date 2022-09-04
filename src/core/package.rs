@@ -121,6 +121,10 @@ impl Package {
         Object::new(&[("component", &component)]).expect("Failed to create Package")
     }
 
+    pub fn component(&self) -> Component {
+        self.imp().component.borrow().clone()
+    }
+
     pub fn name(&self) -> String {
         let name_ref = self.imp().name.borrow();
         if name_ref.is_some() {
