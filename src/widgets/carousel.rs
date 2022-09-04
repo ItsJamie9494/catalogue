@@ -25,8 +25,14 @@ use gtk::{
 };
 
 mod imp {
+    use std::cell::RefCell;
+
+    use crate::core::package::Package;
+
     use super::*;
-    use gtk::Button;
+    use glib::{BindingFlags, ParamSpec, ParamSpecObject, Value};
+    use gtk::{Button, Image, Label};
+    use once_cell::sync::Lazy;
 
     #[derive(Debug, Default, CompositeTemplate)]
     #[template(resource = "/dev/itsjamie/Catalogue/carousel.ui")]
@@ -41,7 +47,16 @@ mod imp {
 
     #[derive(Debug, Default, CompositeTemplate)]
     #[template(resource = "/dev/itsjamie/Catalogue/carousel-tile.ui")]
-    pub struct CarouselTile {}
+    pub struct CarouselTile {
+        #[template_child]
+        pub image: TemplateChild<Image>,
+        #[template_child]
+        pub title: TemplateChild<Label>,
+        #[template_child]
+        pub subtitle: TemplateChild<Label>,
+
+        pub package: RefCell<Package>,
+    }
 
     impl Carousel {
         pub fn move_relative_page(&self, delta: i32) {
@@ -95,7 +110,49 @@ mod imp {
             obj.carousel().append(&super::CarouselTile::new());
         }
     }
-    impl ObjectImpl for CarouselTile {}
+    impl ObjectImpl for CarouselTile {
+        fn properties() -> &'static [ParamSpec] {
+            static PROPERTIES: Lazy<Vec<ParamSpec>> = Lazy::new(|| {
+                vec![ParamSpecObject::builder("package", Package::static_type()).build()]
+            });
+            PROPERTIES.as_ref()
+        }
+
+        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+            match pspec.name() {
+                "package" => {
+                    let package: Package = value
+                        .get()
+                        .expect("The value needs to be of type `CataloguePackage`");
+
+                    package
+                        .bind_property("name", &self.title.get(), "label")
+                        .flags(BindingFlags::SYNC_CREATE)
+                        .build();
+
+                    package
+                        .bind_property("summary", &self.subtitle.get(), "label")
+                        .flags(BindingFlags::SYNC_CREATE)
+                        .build();
+
+                    package
+                        .bind_property("image", &self.image.get(), "gicon")
+                        .flags(BindingFlags::SYNC_CREATE)
+                        .build();
+
+                    self.package.replace(package);
+                }
+                _ => unimplemented!(),
+            }
+        }
+
+        fn property(&self, _obj: &Self::Type, _id: usize, pspec: &ParamSpec) -> Value {
+            match pspec.name() {
+                "package" => self.package.borrow().to_value(),
+                _ => unimplemented!(),
+            }
+        }
+    }
     impl WidgetImpl for Carousel {}
     impl WidgetImpl for CarouselTile {}
     impl BoxImpl for Carousel {}
