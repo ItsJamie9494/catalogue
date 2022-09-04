@@ -1,4 +1,4 @@
-/* core/mod.rs
+/* core/client.rs
  *
  * Copyright 2022 Jamie Murphy
  *
@@ -18,8 +18,27 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-pub mod category;
-pub mod client;
-pub mod package;
+use super::{
+    backend::{flatpak::FlatpakBackend, Backend},
+    package::Package,
+};
 
-pub mod backend;
+pub struct Client {
+    active_backend: Box<dyn Backend>,
+    backends: Vec<Box<dyn Backend>>,
+}
+
+impl Client {
+    fn get_package_for_component_id(&self, id: String) -> Option<Package> {
+        self.active_backend.get_package_for_component_id(id)
+    }
+}
+
+impl Default for Client {
+    fn default() -> Self {
+        Self {
+            active_backend: Box::new(FlatpakBackend::default()),
+            backends: vec![Box::new(FlatpakBackend::default())],
+        }
+    }
+}
