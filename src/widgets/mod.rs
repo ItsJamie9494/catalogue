@@ -19,5 +19,6 @@
  */
 
 //pub mod stack_switcher;
+pub mod app_tile;
 pub mod carousel;
 pub mod category_tile;

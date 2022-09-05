@@ -5,6 +5,7 @@
     <file preprocess="xml-stripblanks" alias="carousel.ui">ui/carousel.ui</file>
     <file preprocess="xml-stripblanks" alias="carousel-tile.ui">ui/carousel-tile.ui</file>
     <file preprocess="xml-stripblanks" alias="category-tile.ui">ui/category-tile.ui</file>
+    <file preprocess="xml-stripblanks" alias="app-tile.ui">ui/app-tile.ui</file>
     <file alias="style.css">style/style.css</file>
     <file alias="style-dark.css">style/style-dark.css</file>
 
