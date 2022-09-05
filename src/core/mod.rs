@@ -18,8 +18,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+pub mod backend;
 pub mod category;
 pub mod client;
 pub mod package;
-
-pub mod backend;
+pub mod utils;
