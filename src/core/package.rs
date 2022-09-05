@@ -125,6 +125,12 @@ impl Package {
         self.imp().component.borrow().clone()
     }
 
+    pub fn set_component(&self, component: Component) {
+        self.imp().name.replace(None);
+        self.imp().summary.replace(None);
+        self.imp().component.replace(component);
+    }
+
     pub fn name(&self) -> String {
         let name_ref = self.imp().name.borrow();
         if name_ref.is_some() {

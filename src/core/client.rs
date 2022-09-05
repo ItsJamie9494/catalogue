@@ -25,12 +25,26 @@ use super::{
 
 pub struct Client {
     active_backend: Box<dyn Backend>,
-    backends: Vec<Box<dyn Backend>>,
 }
 
 impl Client {
-    fn get_package_for_component_id(&self, id: String) -> Option<Package> {
+    pub fn get_package_for_component_id(&self, id: String) -> Option<Package> {
         self.active_backend.get_package_for_component_id(id)
+    }
+
+    /// Asyncronously refresh the current backend
+    pub async fn refresh_cache(&self, force_update: bool) {
+        println!("Updating Cache");
+
+        // TODO Handle Refresh Timeouts
+
+        if force_update {
+            if online::check(None).await.is_ok() {
+                self.active_backend.refresh_cache();
+            } else {
+                println!("No Internet Connection");
+            }
+        }
     }
 }
 
@@ -38,7 +52,6 @@ impl Default for Client {
     fn default() -> Self {
         Self {
             active_backend: Box::new(FlatpakBackend::default()),
-            backends: vec![Box::new(FlatpakBackend::default())],
         }
     }
 }

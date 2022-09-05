@@ -24,4 +24,5 @@ pub mod flatpak;
 
 pub trait Backend {
     fn get_package_for_component_id(&self, id: String) -> Option<Package>;
+    fn refresh_cache(&self);
 }
