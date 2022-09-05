@@ -18,13 +18,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-use crate::{config::APP_ID, core::package::Package};
+use crate::{
+    config::APP_ID,
+    core::{
+        package::Package,
+        utils::{get_file_age, remove_dir_contents},
+    },
+};
 use appstream::{prelude::*, BundleKind, FormatStyle, Pool, PoolFlags};
 use dirs::cache_dir;
 use flatpak::{prelude::*, Installation, Remote};
 use gio::{traits::FileExt, Cancellable, FileMonitor};
 use std::{
-    cell::RefCell, collections::HashMap, fs::create_dir_all, os::unix::fs::symlink, path::PathBuf,
+    cell::RefCell, collections::HashMap, error::Error, fs::create_dir_all, os::unix::fs::symlink,
+    path::PathBuf,
 };
 
 use super::Backend;
@@ -98,7 +105,8 @@ impl Backend for FlatpakBackend {
             );
             self.preprocess_appstream_metadata(false, remotes.clone());
 
-            self.reload_appstream_pool(self.user_pool.clone(), self.user_metadata.clone());
+            self.reload_appstream_pool(self.user_pool.clone(), self.user_metadata.clone())
+                .unwrap();
         }
 
         if self.system_installation.is_some() {
@@ -118,36 +126,52 @@ impl Backend for FlatpakBackend {
             );
             self.preprocess_appstream_metadata(true, remotes);
 
-            self.reload_appstream_pool(self.system_pool.clone(), self.system_metadata.clone());
+            self.reload_appstream_pool(self.system_pool.clone(), self.system_metadata.clone())
+                .unwrap();
         }
     }
 }
 
 impl FlatpakBackend {
-    fn reload_appstream_pool(&self, pool: Pool, metadata: String) {
+    fn reload_appstream_pool(&self, pool: Pool, metadata: String) -> Result<(), Box<dyn Error>> {
         pool.reset_extra_data_locations();
         pool.add_extra_data_location(&metadata, FormatStyle::Collection);
 
         println!("Loading Pool...");
-        pool.load(Some(&self.cancellable)).unwrap();
+        pool.load(Some(&self.cancellable))?;
         for comp in pool.components().iter() {
             let bundle = comp.bundle(BundleKind::Flatpak);
-            if bundle.is_some() {
-                let key = Self::generate_package_list_key(
-                    false,
-                    comp.origin().unwrap().to_string(),
-                    bundle.unwrap().id().unwrap().to_string(),
-                );
+            match bundle {
+                Some(bundle) => {
+                    let key = Self::generate_package_list_key(
+                        false,
+                        comp.origin()
+                            .map(|x| x.to_string())
+                            .expect("Expected a string"),
+                        bundle
+                            .id()
+                            .map(|x| x.to_string())
+                            .expect("Expected a string"),
+                    );
 
-                let mut pkg_list = self.package_list.borrow_mut();
-                let package = pkg_list.get_key_value(&key);
-                if package.is_some() {
-                    package.unwrap().1.set_component(comp.clone());
-                } else {
-                    pkg_list.insert(key, Package::new(comp.clone()));
+                    let mut pkg_list = self.package_list.borrow_mut();
+                    let package = pkg_list.get_key_value(&key);
+
+                    match package {
+                        Some(package) => {
+                            package.1.set_component(comp.clone());
+                        }
+                        None => {
+                            pkg_list.insert(key, Package::new(comp.clone()));
+                        }
+                    }
+                }
+                None => {
+                    println!("Failed to find bundle");
                 }
             }
         }
+        Ok(())
     }
 
     fn preprocess_appstream_metadata(&self, system: bool, remotes: Vec<Remote>) {
@@ -167,10 +191,10 @@ impl FlatpakBackend {
         } else {
             create_dir_all(dest_path.clone()).expect("Failed to create Flatpak metadata directory");
 
-            // TODO Clean Directory
+            remove_dir_contents(dest_path.clone()).unwrap();
 
             for remote in remotes.iter() {
-                let refresh_needed;
+                let mut refresh_needed = true;
                 let origin_name = remote.name().map(|x| x.to_string()).unwrap();
                 println!("Found remote {}", origin_name);
 
@@ -184,8 +208,13 @@ impl FlatpakBackend {
                     // Refresh
                     refresh_needed = true;
                 } else {
-                    // TODO: Make sure file is old enough
-                    refresh_needed = true;
+                    let age = get_file_age(timestamp.path().unwrap()).unwrap();
+                    println!("Age: {}", age);
+
+                    // File should be at least 1 hour old before refreshing
+                    if age > 3600 {
+                        refresh_needed = true;
+                    }
                 }
 
                 if refresh_needed {
