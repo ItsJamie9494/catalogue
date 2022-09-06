@@ -31,13 +31,9 @@ use crate::CatalogueWindow;
 use log::{debug, info};
 
 mod imp {
-    use crate::{
-        core::client::Client,
-        widgets::carousel::{Carousel, CarouselTile},
-    };
+    use crate::widgets::carousel::{Carousel, CarouselTile};
 
     use super::*;
-    use futures::executor::block_on;
     use glib::WeakRef;
     use once_cell::sync::OnceCell;
 
@@ -65,9 +61,6 @@ mod imp {
         fn activate(&self, app: &Self::Type) {
             debug!("AdwApplication<CatalogueApplication>::activate");
             self.parent_activate(app);
-
-            let client = Client::default();
-            block_on(client.refresh_cache(true));
 
             if let Some(window) = self.window.get() {
                 let window = window.upgrade().unwrap();
