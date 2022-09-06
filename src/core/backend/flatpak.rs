@@ -29,6 +29,7 @@ use appstream::{prelude::*, BundleKind, FormatStyle, Pool, PoolFlags};
 use dirs::cache_dir;
 use flatpak::{prelude::*, Installation, Remote};
 use gio::{traits::FileExt, Cancellable, FileMonitor};
+use log::{debug, warn};
 use std::{
     cell::RefCell, collections::HashMap, error::Error, fs::create_dir_all, os::unix::fs::symlink,
     path::PathBuf,
@@ -84,7 +85,7 @@ impl Backend for FlatpakBackend {
         let mut remotes: Vec<Remote> = Vec::new();
 
         if self.user_installation.is_none() && self.system_installation.is_none() {
-            println!("No flatpak installations");
+            warn!("No flatpak installations");
             return;
         }
 
@@ -137,7 +138,7 @@ impl FlatpakBackend {
         pool.reset_extra_data_locations();
         pool.add_extra_data_location(&metadata, FormatStyle::Collection);
 
-        println!("Loading Pool...");
+        debug!("Loading Pool...");
         pool.load(Some(&self.cancellable))?;
         for comp in pool.components().iter() {
             let bundle = comp.bundle(BundleKind::Flatpak);
@@ -167,7 +168,7 @@ impl FlatpakBackend {
                     }
                 }
                 None => {
-                    println!("Failed to find bundle");
+                    warn!("Failed to find bundle from {:?}", comp.id());
                 }
             }
         }
@@ -196,10 +197,10 @@ impl FlatpakBackend {
             for remote in remotes.iter() {
                 let mut refresh_needed = true;
                 let origin_name = remote.name().map(|x| x.to_string()).unwrap();
-                println!("Found remote {}", origin_name);
+                debug!("Found remote {}", origin_name);
 
                 if remote.is_disabled() {
-                    println!("{} is disabled, skipping", origin_name);
+                    debug!("{} is disabled, skipping", origin_name);
                     continue;
                 }
 
@@ -209,7 +210,7 @@ impl FlatpakBackend {
                     refresh_needed = true;
                 } else {
                     let age = get_file_age(timestamp.path().unwrap()).unwrap();
-                    println!("Age: {}", age);
+                    debug!("Age: {}", age);
 
                     // File should be at least 1 hour old before refreshing
                     if age > 3600 {
@@ -218,14 +219,14 @@ impl FlatpakBackend {
                 }
 
                 if refresh_needed {
-                    println!("Updating remote metadata");
+                    debug!("Updating remote metadata");
                     installation
                         .clone()
                         .unwrap()
                         .update_remote_sync(&origin_name, Some(&self.cancellable))
                         .expect("Failed to update remote");
 
-                    println!("Updating remote appstream metadata");
+                    debug!("Updating remote appstream metadata");
                     installation
                         .clone()
                         .unwrap()
@@ -283,8 +284,6 @@ impl Default for FlatpakBackend {
         system_metadata.push(APP_ID);
         system_metadata.push("flatpak-metadata");
         system_metadata.push("system");
-
-        println!("{:?}", system_metadata);
 
         Self {
             package_list: RefCell::new(HashMap::new()),

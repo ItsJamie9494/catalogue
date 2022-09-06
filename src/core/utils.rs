@@ -25,6 +25,8 @@ use std::{
     time::SystemTime,
 };
 
+use log::error;
+
 /// Remove all contents of a directory, without removing the directory itself
 pub fn remove_dir_contents<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn Error>> {
     for entry in read_dir(path)? {
@@ -42,7 +44,7 @@ pub fn get_file_age<P: AsRef<Path>>(path: P) -> Result<u64, Box<dyn Error>> {
 
         return Ok(now.duration_since(time)?.as_secs());
     } else {
-        println!("Not supported");
+        error!("Not supported");
     }
 
     Ok(u64::MAX)

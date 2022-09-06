@@ -18,6 +18,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+use log::{debug, warn};
+
 use super::{
     backend::{flatpak::FlatpakBackend, Backend},
     package::Package,
@@ -34,7 +36,7 @@ impl Client {
 
     /// Asyncronously refresh the current backend
     pub async fn refresh_cache(&self, force_update: bool) {
-        println!("Updating Cache");
+        debug!("Updating Cache");
 
         // TODO Handle Refresh Timeouts
 
@@ -42,7 +44,7 @@ impl Client {
             if online::check(None).await.is_ok() {
                 self.active_backend.refresh_cache();
             } else {
-                println!("No Internet Connection");
+                warn!("No Internet Connection");
             }
         }
     }
