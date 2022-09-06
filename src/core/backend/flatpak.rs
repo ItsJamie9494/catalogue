@@ -22,7 +22,7 @@ use crate::{
     config::APP_ID,
     core::{
         package::Package,
-        utils::{get_file_age, remove_dir_contents},
+        utils::{get_file_age, remove_dir_contents, xml::fixup},
     },
 };
 use appstream::{prelude::*, BundleKind, FormatStyle, Pool, PoolFlags};
@@ -104,9 +104,9 @@ impl Backend for FlatpakBackend {
                     .list_remotes(Some(&self.cancellable))
                     .expect("Failed to get Flatpak remotes from user installation"),
             );
-            self.preprocess_appstream_metadata(false, remotes.clone());
+            self.preprocess_appstream_metadata(false, &remotes);
 
-            self.reload_appstream_pool(self.user_pool.clone(), self.user_metadata.clone())
+            self.reload_appstream_pool(&self.user_pool, &self.user_metadata)
                 .unwrap();
         }
 
@@ -125,16 +125,16 @@ impl Backend for FlatpakBackend {
                     .list_remotes(Some(&self.cancellable))
                     .expect("Failed to get Flatpak remotes from system installation"),
             );
-            self.preprocess_appstream_metadata(true, remotes);
+            self.preprocess_appstream_metadata(true, &remotes);
 
-            self.reload_appstream_pool(self.system_pool.clone(), self.system_metadata.clone())
+            self.reload_appstream_pool(&self.system_pool, &self.system_metadata)
                 .unwrap();
         }
     }
 }
 
 impl FlatpakBackend {
-    fn reload_appstream_pool(&self, pool: Pool, metadata: String) -> Result<(), Box<dyn Error>> {
+    fn reload_appstream_pool(&self, pool: &Pool, metadata: &String) -> Result<(), Box<dyn Error>> {
         pool.reset_extra_data_locations();
         pool.add_extra_data_location(&metadata, FormatStyle::Collection);
 
@@ -168,14 +168,14 @@ impl FlatpakBackend {
                     }
                 }
                 None => {
-                    warn!("Failed to find bundle from {:?}", comp.id());
+                    warn!("Failed to find bundle with ID {:?}", comp.id());
                 }
             }
         }
         Ok(())
     }
 
-    fn preprocess_appstream_metadata(&self, system: bool, remotes: Vec<Remote>) {
+    fn preprocess_appstream_metadata(&self, system: bool, remotes: &Vec<Remote>) {
         let dest_path: String;
         let installation: Option<Installation>;
 
@@ -190,9 +190,9 @@ impl FlatpakBackend {
         if installation.is_none() {
             return;
         } else {
-            create_dir_all(dest_path.clone()).expect("Failed to create Flatpak metadata directory");
+            create_dir_all(&dest_path).expect("Failed to create Flatpak metadata directory");
 
-            remove_dir_contents(dest_path.clone()).unwrap();
+            remove_dir_contents(&dest_path).unwrap();
 
             for remote in remotes.iter() {
                 let mut refresh_needed = true;
@@ -235,10 +235,45 @@ impl FlatpakBackend {
 
                     let mut metadata_file =
                         PathBuf::from(remote.appstream_dir(None).unwrap().path().unwrap());
-                    metadata_file.push("appstream.xml.gz");
-                    let mut metadata_dest = PathBuf::from(dest_path.clone());
-                    metadata_dest.push(format!("{}.xml.gz", &origin_name));
-                    symlink(metadata_file, metadata_dest).unwrap();
+                    metadata_file.push("appstream.xml");
+                    let mut metadata_dest = PathBuf::from(&dest_path);
+                    metadata_dest.push(format!("{}.xml", &origin_name));
+
+                    if metadata_file.exists() {
+                        fixup(&origin_name, metadata_file, metadata_dest).unwrap();
+
+                        let mut local_icons_path = PathBuf::from(&dest_path);
+                        local_icons_path.push("icons");
+
+                        if !local_icons_path.exists() {
+                            create_dir_all(&local_icons_path).expect(
+                                "Error creating Flatpak icon structure, icons may not display",
+                            );
+                        }
+
+                        let mut remote_icons_path =
+                            PathBuf::from(remote.appstream_dir(None).unwrap().path().unwrap());
+                        remote_icons_path.push("icons");
+                        if !remote_icons_path.exists() {
+                            debug!("Remote icons missing for remote {}", origin_name);
+                            continue;
+                        }
+
+                        remote_icons_path.push(&origin_name);
+                        local_icons_path.push(&origin_name);
+                        if remote_icons_path.exists() {
+                            symlink(&remote_icons_path, &local_icons_path).expect(
+                                "Error creating Flatpak icon structure, icons may not display",
+                            );
+                        } else {
+                            remote_icons_path.pop();
+                            symlink(&remote_icons_path, &local_icons_path).expect(
+                                "Error creating Flatpak icon structure, icons may not display",
+                            );
+                        }
+                    } else {
+                        continue;
+                    }
                 }
             }
         }
