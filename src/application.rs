@@ -33,7 +33,10 @@ use log::{debug, info};
 mod imp {
     use crate::{
         core::client::Client,
-        widgets::carousel::{Carousel, CarouselTile},
+        widgets::{
+            carousel::{Carousel, CarouselTile},
+            page::Page,
+        },
     };
 
     use super::*;
@@ -60,6 +63,7 @@ mod imp {
 
             Carousel::ensure_type();
             CarouselTile::ensure_type();
+            Page::ensure_type();
         }
     }
     impl ApplicationImpl for CatalogueApplication {

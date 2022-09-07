@@ -22,3 +22,4 @@
 pub mod app_tile;
 pub mod carousel;
 pub mod category_tile;
+pub mod page;
