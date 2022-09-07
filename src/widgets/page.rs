@@ -113,3 +113,7 @@ impl Page {
         Object::new(&[]).expect("Failed to create Page")
     }
 }
+
+pub trait PageImpl: WidgetImpl {}
+
+unsafe impl<T: PageImpl> IsSubclassable<T> for Page {}
