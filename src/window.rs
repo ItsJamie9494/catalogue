@@ -19,14 +19,18 @@
  */
 
 use adw::subclass::prelude::*;
+use adw::NavigationDirection;
+use appstream::prelude::*;
 use appstream::Category;
 use gtk::{gio, glib, prelude::*, CompositeTemplate};
 
 use crate::config::{APP_ID, PROFILE};
+use crate::widgets::category_page::CategoryPage;
 use crate::widgets::category_tile::CategoryTile;
 
 mod imp {
-    use gtk::{gio::Settings, FlowBox};
+    use adw::{Leaflet, WindowTitle};
+    use gtk::{gio::Settings, template_callbacks, Box, Button, FlowBox};
 
     use crate::core::category::CatalogueCategories;
 
@@ -37,13 +41,34 @@ mod imp {
     pub struct CatalogueWindow {
         #[template_child]
         pub featured: TemplateChild<FlowBox>,
+
+        #[template_child]
+        pub subpage_leaflet: TemplateChild<Leaflet>,
+
+        #[template_child]
+        pub subpage_title: TemplateChild<WindowTitle>,
+
+        #[template_child]
+        pub subpage_content: TemplateChild<Box>,
+
         pub settings: Settings,
+    }
+
+    #[template_callbacks]
+    impl CatalogueWindow {
+        #[template_callback]
+        fn leaflet_back_clicked_cb(&self, _button: &Button) {
+            self.subpage_leaflet.navigate(NavigationDirection::Back);
+        }
     }
 
     impl Default for CatalogueWindow {
         fn default() -> Self {
             Self {
                 featured: TemplateChild::default(),
+                subpage_leaflet: TemplateChild::default(),
+                subpage_title: TemplateChild::default(),
+                subpage_content: TemplateChild::default(),
                 settings: Settings::new(APP_ID),
             }
         }
@@ -57,6 +82,7 @@ mod imp {
 
         fn class_init(klass: &mut Self::Class) {
             Self::bind_template(klass);
+            Self::bind_template_callbacks(klass);
         }
 
         fn instance_init(obj: &glib::subclass::InitializingObject<Self>) {
@@ -139,8 +165,26 @@ impl CatalogueWindow {
     fn load_category_tile(&self, category: Category) {
         let btn = CategoryTile::new(category);
 
-        btn.connect_clicked(|_| {
-            println!("nya button clicked");
+        let content = self.imp().subpage_content.clone();
+        let leaflet = self.imp().subpage_leaflet.clone();
+        let title = self.imp().subpage_title.clone();
+        btn.connect_clicked(move |tile| {
+            let category = tile.category();
+            // Remove previous page
+            if !content
+                .last_child()
+                .unwrap()
+                .widget_name()
+                .to_string()
+                .contains("HeaderBar")
+            {
+                content.last_child().unwrap().unparent();
+            }
+
+            title.set_title(&category.name().expect("Expected a string"));
+            content.append(&CategoryPage::new(tile.category()));
+
+            leaflet.navigate(NavigationDirection::Forward);
         });
 
         self.imp().featured.append(&btn);
