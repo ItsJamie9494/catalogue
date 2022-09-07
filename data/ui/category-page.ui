@@ -2,99 +2,104 @@
 <interface>
     <requires lib="gtk" version="4.0" />
     <requires lib="Adw" version="1.0" />
-    <template class="CatalogueCategoryPage" parent="CataloguePage">
+    <template class="CatalogueCategoryPage" parent="GtkWidget">
+        <property name="vexpand">true</property>
         <child>
-            <object class="CatalogueCarousel" />
-        </child>
-        <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
+            <object class="CataloguePage">
                 <child>
-                    <object class="GtkLabel">
-                        <property name="halign">fill</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="xalign">0</property>
-                        <property name="wrap">True</property>
-                        <property name="max-width-chars">60</property>
-                        <property name="label">Editor's Picks</property>
-                        <style>
-                            <class name="title-2" />
-                        </style>
+                    <object class="CatalogueCarousel" />
+                </child>
+                <child>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="halign">fill</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="xalign">0</property>
+                                <property name="wrap">True</property>
+                                <property name="max-width-chars">60</property>
+                                <property name="label">Editor's Picks</property>
+                                <style>
+                                    <class name="title-2" />
+                                </style>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkFlowBox" id="editor_box">
+                                <property name="min-children-per-line">2</property>
+                                <property name="homogeneous">True</property>
+                                <property name="column-spacing">14</property>
+                                <property name="row-spacing">14</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="selection-mode">none</property>
+                            </object>
+                        </child>
                     </object>
                 </child>
                 <child>
-                    <object class="GtkFlowBox" id="editor_box">
-                        <property name="min-children-per-line">2</property>
-                        <property name="homogeneous">True</property>
-                        <property name="column-spacing">14</property>
-                        <property name="row-spacing">14</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="selection-mode">none</property>
-                    </object>
-                </child>
-            </object>
-        </child>
-        <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
-                <child>
-                    <object class="GtkLabel">
-                        <property name="halign">fill</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="xalign">0</property>
-                        <property name="wrap">True</property>
-                        <property name="max-width-chars">60</property>
-                        <property name="label">Recently Updated</property>
-                        <style>
-                            <class name="title-2" />
-                        </style>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkFlowBox" id="recent_box">
-                        <property name="min-children-per-line">2</property>
-                        <property name="homogeneous">True</property>
-                        <property name="column-spacing">14</property>
-                        <property name="row-spacing">14</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="selection-mode">none</property>
-                    </object>
-                </child>
-            </object>
-        </child>
-        <child>
-            <object class="GtkBox">
-                <property name="orientation">vertical</property>
-                <property name="spacing">12</property>
-                <child>
-                    <object class="GtkLabel">
-                        <property name="halign">fill</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="xalign">0</property>
-                        <property name="wrap">True</property>
-                        <property name="max-width-chars">60</property>
-                        <property name="label">More Apps</property>
-                        <style>
-                            <class name="title-2" />
-                        </style>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="halign">fill</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="xalign">0</property>
+                                <property name="wrap">True</property>
+                                <property name="max-width-chars">60</property>
+                                <property name="label">Recently Updated</property>
+                                <style>
+                                    <class name="title-2" />
+                                </style>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkFlowBox" id="recent_box">
+                                <property name="min-children-per-line">2</property>
+                                <property name="homogeneous">True</property>
+                                <property name="column-spacing">14</property>
+                                <property name="row-spacing">14</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="selection-mode">none</property>
+                            </object>
+                        </child>
                     </object>
                 </child>
                 <child>
-                    <object class="GtkFlowBox" id="more_box">
-                        <property name="min-children-per-line">2</property>
-                        <property name="homogeneous">True</property>
-                        <property name="column-spacing">14</property>
-                        <property name="row-spacing">14</property>
-                        <property name="valign">start</property>
-                        <property name="hexpand">True</property>
-                        <property name="selection-mode">none</property>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">12</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="halign">fill</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="xalign">0</property>
+                                <property name="wrap">True</property>
+                                <property name="max-width-chars">60</property>
+                                <property name="label">More Apps</property>
+                                <style>
+                                    <class name="title-2" />
+                                </style>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkFlowBox" id="more_box">
+                                <property name="min-children-per-line">2</property>
+                                <property name="homogeneous">True</property>
+                                <property name="column-spacing">14</property>
+                                <property name="row-spacing">14</property>
+                                <property name="valign">start</property>
+                                <property name="hexpand">True</property>
+                                <property name="selection-mode">none</property>
+                            </object>
+                        </child>
                     </object>
                 </child>
             </object>
