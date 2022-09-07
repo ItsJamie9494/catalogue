@@ -35,6 +35,7 @@ mod imp {
         core::client::Client,
         widgets::{
             carousel::{Carousel, CarouselTile},
+            category_page::CategoryPage,
             page::Page,
         },
     };
@@ -64,6 +65,7 @@ mod imp {
             Carousel::ensure_type();
             CarouselTile::ensure_type();
             Page::ensure_type();
+            CategoryPage::ensure_type();
         }
     }
     impl ApplicationImpl for CatalogueApplication {
