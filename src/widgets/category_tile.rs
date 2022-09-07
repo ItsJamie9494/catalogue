@@ -114,4 +114,8 @@ impl CategoryTile {
     pub fn new(category: Category) -> Self {
         Object::new(&[("category", &category)]).expect("Failed to create CategoryTile")
     }
+
+    pub fn category(&self) -> Category {
+        self.imp().category.borrow().clone()
+    }
 }
