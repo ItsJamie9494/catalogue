@@ -21,6 +21,7 @@ use adw::subclass::prelude::*;
 use appstream::prelude::*;
 use appstream::Component;
 use appstream::IconKind;
+use appstream::Release;
 use gio::File;
 use gio::FileIcon;
 use gio::Icon;
@@ -31,6 +32,7 @@ use gtk::{
     glib::{self, Object},
     prelude::*,
 };
+use std::cmp::Ordering;
 
 mod imp {
     use std::cell::RefCell;
@@ -45,6 +47,7 @@ mod imp {
         pub component: RefCell<Component>,
 
         pub name: RefCell<Option<String>>,
+        pub version: RefCell<Option<String>>,
         pub summary: RefCell<Option<String>>,
     }
 
@@ -61,6 +64,7 @@ mod imp {
                 vec![
                     ParamSpecObject::builder("component", Component::static_type()).build(),
                     ParamSpecString::builder("name").build(),
+                    ParamSpecString::builder("version").build(),
                     ParamSpecString::builder("summary").build(),
                     ParamSpecObject::builder("icon", Icon::static_type()).build(),
                 ]
@@ -79,6 +83,13 @@ mod imp {
                 }
                 "name" => {
                     self.name.replace(Some(
+                        value
+                            .get::<String>()
+                            .expect("The value needs to be of type `String`"),
+                    ));
+                },
+                "version" => {
+                    self.version.replace(Some(
                         value
                             .get::<String>()
                             .expect("The value needs to be of type `String`"),
@@ -103,6 +114,7 @@ mod imp {
             match pspec.name() {
                 "component" => self.component.borrow().to_value(),
                 "name" => obj.name().to_value(),
+                "version" => obj.version().to_value(),
                 "summary" => obj.summary().to_value(),
                 // For more precise measurements, just call the function directly
                 "icon" => obj.icon(64, 64).to_value(),
@@ -143,6 +155,12 @@ impl Package {
 
             return name.unwrap();
         }
+    }
+
+    // TODO write this function. Need to check AppStream metadata and probably Flatpak ref details.
+    // Maybe add a PackageDetails trait that backends can use
+    pub fn version(&self) -> String {
+        return String::from("Nya!");
     }
 
     pub fn summary(&self) -> String {
@@ -212,6 +230,64 @@ impl Package {
         }
 
         icon
+    }
+
+    // Max releases is needed for determining Installed, but since we don't check that yet,
+    // it's not needed
+    pub fn get_newest_releases (&self, min_releases: usize, _max_releases: usize) -> Vec<Release> {
+        let mut list: Vec<Release> = Vec::new();
+        let mut releases = self.imp().component.borrow().releases();
+
+        for rel in releases.clone().iter() {
+            if rel.version().is_none() {
+                releases.remove(releases.iter().position(|x| x == rel).expect("Expected a Release"));
+            }
+        }
+
+        if releases.len() < min_releases {
+            return list;
+        }
+
+        releases.sort_by(|a, b| {
+            match b.vercmp(a) {
+                -1 => Ordering::Less,
+                0 => Ordering::Equal,
+                1 => Ordering::Greater,
+                // This function should only return -1, 0, or 1.
+                _ => unimplemented!("Invalid Release Comparison"),
+            }
+        });
+
+        // TODO Add checks for Installed apps
+
+        for rel in 0..min_releases {
+            // Clone is required again, no Copy
+            list.insert(rel, releases.get(rel).expect("Expected a release").clone());
+        }
+
+        list
+    }
+
+    pub fn get_latest_release (&self) -> Option<Release> {
+        let mut releases = self.imp().component.borrow().releases();
+        releases.sort_by(|a, b| {
+            if a.version().is_none() || b.version().is_none() {
+                a.version().map(|_| return Ordering::Less);
+                b.version().map(|_| return Ordering::Greater);
+                return Ordering::Equal;
+            } else {
+                match b.vercmp(a) {
+                    -1 => Ordering::Less,
+                    0 => Ordering::Equal,
+                    1 => Ordering::Greater,
+                    // This function should only return -1, 0, or 1.
+                    _ => unimplemented!("Invalid Release Comparison"),
+                }
+            }
+        });
+
+        // Using x.clone() to dereference, as Release doesn't support Copy or *
+        releases.get(0).map(|x| x.clone())
     }
 }
 
