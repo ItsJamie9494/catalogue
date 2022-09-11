@@ -18,10 +18,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+use std::cmp::Ordering;
+
 use appstream::prelude::*;
 use appstream::Category;
+use appstream::ComponentKind;
 
 use crate::create_category;
+
+use super::package::Package;
 
 pub struct CatalogueCategories {
     pub accessories: Category,
@@ -157,5 +162,45 @@ impl Default for CatalogueCategories {
                 )
             ),
         }
+    }
+}
+
+// Adds extra functions used for categories
+pub trait CatalogueCategory {
+    fn get_recently_updated_packages(&self, size: Option<usize>) -> Vec<Package>;
+}
+
+impl CatalogueCategory for Category {
+    fn get_recently_updated_packages(&self, size: Option<usize>) -> Vec<Package> {
+        let mut apps = Vec::new();
+        // We don't want to modify the original list
+        let mut packages = self.components().clone();
+
+        // Sort by latest releases
+        packages.sort_unstable_by(|p1, p2| {
+            let p1_pkg = Package::new(p1.clone());
+            let p2_pkg = Package::new(p2.clone());
+
+            let p1_release = p1_pkg
+                .get_latest_release()
+                .map(|x| x.timestamp())
+                .unwrap_or(0);
+            let p2_release = p2_pkg
+                .get_latest_release()
+                .map(|x| x.timestamp())
+                .unwrap_or(0);
+
+            p2_release
+                .partial_cmp(&p1_release)
+                .unwrap_or(Ordering::Equal)
+        });
+
+        for package in packages.iter() {
+            if apps.len() < size.unwrap_or(20) && package.kind() == ComponentKind::DesktopApp {
+                apps.push(Package::new(package.clone()));
+            }
+        }
+
+        apps
     }
 }
