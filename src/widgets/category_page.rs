@@ -25,6 +25,10 @@ use gtk::{
     CompositeTemplate,
 };
 
+use crate::{application::CatalogueApplication, core::category::CatalogueCategory};
+
+use super::app_tile::AppTile;
+
 mod imp {
     use std::cell::RefCell;
 
@@ -72,14 +76,20 @@ mod imp {
             PROPERTIES.as_ref()
         }
 
-        fn set_property(&self, _obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
+        fn set_property(&self, obj: &Self::Type, _id: usize, value: &Value, pspec: &ParamSpec) {
             match pspec.name() {
                 "category" => {
                     let category: Category = value
                         .get()
                         .expect("The value needs to be of type `AsCategory`.");
 
+                    let client = CatalogueApplication::client(&CatalogueApplication::default());
+                    client.get_packages_for_category(category.clone());
+
                     self.category.replace(category);
+
+                    obj.load_recent_box();
+                    obj.load_more_box();
                 }
                 _ => unimplemented!(),
             }
@@ -113,5 +123,28 @@ impl CategoryPage {
 
     pub fn category(&self) -> Category {
         self.imp().category.borrow().clone()
+    }
+
+    fn load_recent_box(&self) {
+        let packages = self
+            .imp()
+            .category
+            .borrow()
+            .get_recently_updated_packages(Some(12));
+
+        for pkg in packages.iter() {
+            let btn = AppTile::new(pkg.clone());
+            self.imp().recent_box.append(&btn);
+        }
+    }
+
+    fn load_more_box(&self) {
+        let client = CatalogueApplication::client(&CatalogueApplication::default());
+        let packages = client.get_packages_for_category(self.imp().category.borrow().clone());
+
+        for pkg in packages.iter() {
+            let btn = AppTile::new(pkg.clone());
+            self.imp().more_box.append(&btn);
+        }
     }
 }

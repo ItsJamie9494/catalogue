@@ -49,6 +49,7 @@
                             <property name="row-spacing">5</property>
                             <property name="column-spacing">5</property>
                             <property name="selection-mode">none</property>
+                            <property name="homogeneous">true</property>
                           </object>
                         </child>
                         <child>
