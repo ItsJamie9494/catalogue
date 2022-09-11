@@ -59,6 +59,8 @@ mod imp {
     }
 
     impl Carousel {
+        #![allow(clippy::cast_possible_wrap)]
+        #![allow(clippy::cast_possible_truncation)]
         pub fn move_relative_page(&self, delta: i32) {
             let new_page =
                 (self.carousel.position() as i32 + delta + self.carousel.n_pages() as i32)
@@ -192,8 +194,20 @@ impl Carousel {
     }
 }
 
+impl Default for Carousel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CarouselTile {
     pub fn new() -> Self {
         Object::new(&[]).expect("Failed to create CarouselTile")
+    }
+}
+
+impl Default for CarouselTile {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -113,3 +113,9 @@ impl Page {
         Object::new(&[]).expect("Failed to create Page")
     }
 }
+
+impl Default for Page {
+    fn default() -> Self {
+        Self::new()
+    }
+}

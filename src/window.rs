@@ -103,12 +103,12 @@ mod imp {
                 obj.add_css_class("devel");
             }
 
-            obj.load_category_tile(CatalogueCategories::default().create);
-            obj.load_category_tile(CatalogueCategories::default().work);
-            obj.load_category_tile(CatalogueCategories::default().games);
-            obj.load_category_tile(CatalogueCategories::default().internet);
-            obj.load_category_tile(CatalogueCategories::default().develop);
-            obj.load_category_tile(CatalogueCategories::default().accessories);
+            obj.load_category_tile(&CatalogueCategories::default().create);
+            obj.load_category_tile(&CatalogueCategories::default().work);
+            obj.load_category_tile(&CatalogueCategories::default().games);
+            obj.load_category_tile(&CatalogueCategories::default().internet);
+            obj.load_category_tile(&CatalogueCategories::default().develop);
+            obj.load_category_tile(&CatalogueCategories::default().accessories);
 
             obj.load_recent_box();
             obj.load_window_size();
@@ -168,7 +168,7 @@ impl CatalogueWindow {
         }
     }
 
-    fn load_category_tile(&self, category: Category) {
+    fn load_category_tile(&self, category: &Category) {
         let btn = CategoryTile::new(category);
 
         let content = self.imp().subpage_content.clone();
@@ -188,7 +188,7 @@ impl CatalogueWindow {
             }
 
             title.set_title(&category.name().expect("Expected a string"));
-            content.append(&CategoryPage::new(tile.category()));
+            content.append(&CategoryPage::new(&tile.category()));
 
             leaflet.navigate(NavigationDirection::Forward);
         });
@@ -200,8 +200,8 @@ impl CatalogueWindow {
         let client = CatalogueApplication::client(&CatalogueApplication::default());
         let packages = client.get_recently_updated_packages(Some(12));
 
-        for pkg in packages.iter() {
-            let btn = AppTile::new(pkg.clone());
+        for pkg in &packages {
+            let btn = AppTile::new(pkg);
             self.imp().recent_box.append(&btn);
         }
     }

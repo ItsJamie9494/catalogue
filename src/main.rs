@@ -17,6 +17,10 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+#![deny(clippy::pedantic)]
+#![allow(clippy::wildcard_imports)]
+#![allow(clippy::unused_self)]
+#![allow(clippy::module_name_repetitions)]
 
 extern crate pretty_env_logger;
 

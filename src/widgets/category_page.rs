@@ -117,7 +117,7 @@ glib::wrapper! {
 }
 
 impl CategoryPage {
-    pub fn new(category: Category) -> Self {
+    pub fn new(category: &Category) -> Self {
         Object::new(&[("category", &category)]).expect("Failed to create CategoryPage")
     }
 
@@ -132,8 +132,8 @@ impl CategoryPage {
             .borrow()
             .get_recently_updated_packages(Some(12));
 
-        for pkg in packages.iter() {
-            let btn = AppTile::new(pkg.clone());
+        for pkg in &packages {
+            let btn = AppTile::new(pkg);
             self.imp().recent_box.append(&btn);
         }
     }
@@ -142,8 +142,8 @@ impl CategoryPage {
         let client = CatalogueApplication::client(&CatalogueApplication::default());
         let packages = client.get_packages_for_category(self.imp().category.borrow().clone());
 
-        for pkg in packages.iter() {
-            let btn = AppTile::new(pkg.clone());
+        for pkg in &packages {
+            let btn = AppTile::new(pkg);
             self.imp().more_box.append(&btn);
         }
     }

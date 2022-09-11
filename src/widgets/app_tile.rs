@@ -111,7 +111,7 @@ glib::wrapper! {
 }
 
 impl AppTile {
-    pub fn new(package: Package) -> Self {
+    pub fn new(package: &Package) -> Self {
         Object::new(&[("package", &package)]).expect("Failed to create AppTile")
     }
 }

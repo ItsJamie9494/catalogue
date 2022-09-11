@@ -141,7 +141,7 @@ impl CatalogueApplication {
             self,
             "quit",
             clone!(@weak self as app => move |_, _| {
-                app.quit()
+                app.quit();
             })
         );
     }

@@ -57,29 +57,25 @@ impl Backend for FlatpakBackend {
     fn get_package_for_component_id(&self, id: String) -> Option<Package> {
         let suffixed_id = format!("{}.desktop", id);
 
-        if !self.package_list.borrow().is_empty() {
-            for package in self.package_list.borrow().values().into_iter() {
+        if self.package_list.borrow().is_empty() {
+            None
+        } else {
+            for package in self.package_list.borrow().values() {
                 if package
                     .component()
                     .id()
-                    .map(|x| x.to_string() == id)
+                    .map(|x| x == id)
                     .expect("Expected an ID")
+                    || package
+                        .component()
+                        .id()
+                        .map(|x| x == suffixed_id)
+                        .expect("Expected an ID")
                 {
                     return Some(package.clone());
-                } else if package
-                    .component()
-                    .id()
-                    .map(|x| x.to_string() == suffixed_id)
-                    .expect("Expected an ID")
-                {
-                    return Some(package.clone());
-                } else {
-                    continue;
                 }
             }
-            return None;
-        } else {
-            return None;
+            None
         }
     }
 
@@ -92,17 +88,15 @@ impl Backend for FlatpakBackend {
 
         let category_array: &[Category] = &[category.clone()];
 
-        sort_components_into_categories(&self.system_pool.components(), &category_array, false);
+        sort_components_into_categories(&self.system_pool.components(), category_array, false);
         components = category.components();
 
         for comp in components {
             let pkg = self.get_package_for_component_id(
-                comp.id()
-                    .map(|x| return x.to_string())
-                    .expect("Expected an ID"),
+                comp.id().map(|x| x.to_string()).expect("Expected an ID"),
             );
-            if pkg.is_some() {
-                apps.push(pkg.expect("Expected a component"));
+            if let Some(value) = pkg {
+                apps.push(value);
             }
         }
 
@@ -116,8 +110,8 @@ impl Backend for FlatpakBackend {
 
         // Sort by latest releases
         packages.sort_by(|_, p1, _, p2| {
-            let p1_release = p1.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
-            let p2_release = p2.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
+            let p1_release = p1.get_latest_release().map_or(0, |x| x.timestamp());
+            let p2_release = p2.get_latest_release().map_or(0, |x| x.timestamp());
 
             p2_release
                 .partial_cmp(&p1_release)
@@ -186,22 +180,23 @@ impl Backend for FlatpakBackend {
 }
 
 impl FlatpakBackend {
-    fn reload_appstream_pool(&self, pool: &Pool, metadata: &String) -> Result<(), Box<dyn Error>> {
+    fn reload_appstream_pool(&self, pool: &Pool, metadata: &str) -> Result<(), Box<dyn Error>> {
         pool.reset_extra_data_locations();
-        pool.add_extra_data_location(&metadata, FormatStyle::Collection);
+        pool.add_extra_data_location(metadata, FormatStyle::Collection);
 
         debug!("Loading Pool...");
         pool.load(Some(&self.cancellable))?;
-        for comp in pool.components().iter() {
+        for comp in &pool.components() {
             let bundle = comp.bundle(BundleKind::Flatpak);
             match bundle {
                 Some(bundle) => {
                     let key = Self::generate_package_list_key(
                         false,
-                        comp.origin()
+                        &comp
+                            .origin()
                             .map(|x| x.to_string())
                             .expect("Expected a string"),
-                        bundle
+                        &bundle
                             .id()
                             .map(|x| x.to_string())
                             .expect("Expected a string"),
@@ -215,7 +210,7 @@ impl FlatpakBackend {
                             package.1.set_component(comp.clone());
                         }
                         None => {
-                            pkg_list.insert(key, Package::new(comp.clone()));
+                            pkg_list.insert(key, Package::new(comp));
                         }
                     }
                 }
@@ -227,7 +222,7 @@ impl FlatpakBackend {
         Ok(())
     }
 
-    fn preprocess_appstream_metadata(&self, system: bool, remotes: &Vec<Remote>) {
+    fn preprocess_appstream_metadata(&self, system: bool, remotes: &[Remote]) {
         let dest_path: String;
         let installation: Option<Installation>;
 
@@ -240,7 +235,7 @@ impl FlatpakBackend {
         }
 
         if installation.is_none() {
-            return;
+            // TODO
         } else {
             create_dir_all(&dest_path).expect("Failed to create Flatpak metadata directory");
 
@@ -257,10 +252,7 @@ impl FlatpakBackend {
                 }
 
                 let timestamp = remote.appstream_timestamp(None).unwrap();
-                if !timestamp.query_exists(Some(&self.cancellable)) {
-                    // Refresh
-                    refresh_needed = true;
-                } else {
+                if timestamp.query_exists(Some(&self.cancellable)) {
                     let age = get_file_age(timestamp.path().unwrap()).unwrap();
                     debug!("Age: {}", age);
 
@@ -268,6 +260,9 @@ impl FlatpakBackend {
                     if age > 3600 {
                         refresh_needed = true;
                     }
+                } else {
+                    // Refresh
+                    refresh_needed = true;
                 }
 
                 if refresh_needed {
@@ -285,8 +280,7 @@ impl FlatpakBackend {
                         .update_appstream_sync(&origin_name, None, Some(&self.cancellable))
                         .expect("Failed to update appstream");
 
-                    let mut metadata_file =
-                        PathBuf::from(remote.appstream_dir(None).unwrap().path().unwrap());
+                    let mut metadata_file = remote.appstream_dir(None).unwrap().path().unwrap();
                     metadata_file.push("appstream.xml");
                     let mut metadata_dest = PathBuf::from(&dest_path);
                     metadata_dest.push(format!("{}.xml", &origin_name));
@@ -304,7 +298,7 @@ impl FlatpakBackend {
                         }
 
                         let mut remote_icons_path =
-                            PathBuf::from(remote.appstream_dir(None).unwrap().path().unwrap());
+                            remote.appstream_dir(None).unwrap().path().unwrap();
                         remote_icons_path.push("icons");
                         if !remote_icons_path.exists() {
                             debug!("Remote icons missing for remote {}", origin_name);
@@ -331,11 +325,11 @@ impl FlatpakBackend {
         }
     }
 
-    fn generate_package_list_key(system: bool, origin: String, bundle_id: String) -> String {
-        let installation = system.then(|| return String::from("system"));
+    fn generate_package_list_key(system: bool, origin: &str, bundle_id: &str) -> String {
+        let installation = system.then(|| String::from("system"));
         return format!(
             "{}/{}/{}",
-            installation.unwrap_or(String::from("user")),
+            installation.unwrap_or_else(|| String::from("user")),
             origin,
             bundle_id
         );
@@ -381,8 +375,8 @@ impl Default for FlatpakBackend {
             cancellable,
             user_installation,
             system_installation,
-            user_installation_monitor: user_installation_monitor.map(|x| x.ok()).unwrap(),
-            system_installation_monitor: system_installation_monitor.map(|x| x.ok()).unwrap(),
+            user_installation_monitor: user_installation_monitor.map(Result::ok).unwrap(),
+            system_installation_monitor: system_installation_monitor.map(Result::ok).unwrap(),
         }
     }
 }

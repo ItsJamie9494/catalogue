@@ -104,7 +104,6 @@ mod imp {
                 }
                 "icon" => {
                     println!("Unimplemented but should not fail");
-                    return;
                 }
                 _ => unimplemented!(),
             }
@@ -129,7 +128,7 @@ glib::wrapper! {
 }
 
 impl Package {
-    pub fn new(component: Component) -> Self {
+    pub fn new(component: &Component) -> Self {
         Object::new(&[("component", &component)]).expect("Failed to create Package")
     }
 
@@ -146,27 +145,27 @@ impl Package {
     pub fn name(&self) -> String {
         let name_ref = self.imp().name.borrow();
         if name_ref.is_some() {
-            return name_ref.clone().unwrap();
+            name_ref.clone().unwrap()
         } else {
             let name = self.imp().component.borrow().name().map(|x| x.to_string());
             if name.is_none() {
                 todo!();
             }
 
-            return name.unwrap();
+            name.unwrap()
         }
     }
 
     // TODO write this function. Need to check AppStream metadata and probably Flatpak ref details.
     // Maybe add a PackageDetails trait that backends can use
     pub fn version(&self) -> String {
-        return String::from("Nya!");
+        String::from("Nya!")
     }
 
     pub fn summary(&self) -> String {
         let summary_ref = self.imp().summary.borrow();
         if summary_ref.is_some() {
-            return summary_ref.clone().unwrap();
+            summary_ref.clone().unwrap()
         } else {
             let summary = self
                 .imp()
@@ -178,13 +177,14 @@ impl Package {
                 todo!();
             }
 
-            return summary.unwrap();
+            summary.unwrap()
         }
     }
 
     /// By default, when using Properties, this function will return a 64x64 icon
     /// Call this function manually to change the scale or size
     pub fn icon(&self, size: u32, scale: u32) -> Icon {
+        #![allow(clippy::used_underscore_binding)]
         let mut icon: Icon = ThemedIcon::new("application-default-icon").upcast::<Icon>();
         let pixel_size = size * scale;
 
@@ -192,7 +192,7 @@ impl Package {
         let mut current_scale = 0;
 
         let icons = self.imp().component.borrow().icons();
-        for _icon in icons.iter() {
+        for _icon in &icons {
             let icon_scale = _icon.scale();
             let icon_width = _icon.width() * icon_scale;
             let is_icon_bigger = icon_width > current_size && current_size < pixel_size;
@@ -238,7 +238,7 @@ impl Package {
         let mut list: Vec<Release> = Vec::new();
         let mut releases = self.imp().component.borrow().releases();
 
-        for rel in releases.clone().iter() {
+        for rel in &releases.clone() {
             if rel.version().is_none() {
                 releases.remove(
                     releases
@@ -277,9 +277,9 @@ impl Package {
         let mut releases = self.imp().component.borrow().releases();
         releases.sort_by(|a, b| {
             if a.version().is_none() || b.version().is_none() {
-                a.version().map(|_| return Ordering::Less);
-                b.version().map(|_| return Ordering::Greater);
-                return Ordering::Equal;
+                a.version().map(|_| Ordering::Less);
+                b.version().map(|_| Ordering::Greater);
+                Ordering::Equal
             } else {
                 match b.vercmp(a) {
                     -1 => Ordering::Less,
@@ -292,7 +292,7 @@ impl Package {
         });
 
         // Using x.clone() to dereference, as Release doesn't support Copy or *
-        releases.get(0).map(|x| x.clone())
+        releases.get(0).cloned()
     }
 }
 

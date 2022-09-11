@@ -51,10 +51,9 @@ pub fn get_file_age<P: AsRef<Path>>(path: P) -> Result<u64, Box<dyn Error>> {
         let now = SystemTime::now();
 
         return Ok(now.duration_since(time)?.as_secs());
-    } else {
-        error!("Not supported");
     }
 
+    error!("Not supported");
     Ok(u64::MAX)
 }
 
@@ -66,12 +65,12 @@ pub mod xml {
         path::PathBuf,
     };
 
-    pub fn fixup(name: &String, source: PathBuf, dest: PathBuf) -> Result<(), Box<dyn Error>> {
+    pub fn fixup(name: &str, source: PathBuf, dest: PathBuf) -> Result<(), Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(source)?);
         let mut buf = vec![];
         let mut writer = LineWriter::new(File::create(dest)?);
 
-        while let Ok(_) = reader.read_until(b'\n', &mut buf) {
+        while reader.read_until(b'\n', &mut buf).is_ok() {
             if buf.is_empty() {
                 break;
             }
