@@ -25,7 +25,7 @@ use crate::{
         utils::{get_file_age, remove_dir_contents, xml::fixup},
     },
 };
-use appstream::{prelude::*, BundleKind, ComponentKind, FormatStyle, Pool, PoolFlags};
+use appstream::{prelude::*, BundleKind, Category, ComponentKind, FormatStyle, Pool, PoolFlags};
 use dirs::cache_dir;
 use flatpak::{prelude::*, Installation, Remote};
 use gio::{traits::FileExt, Cancellable, FileMonitor};
@@ -36,7 +36,7 @@ use std::{
     path::PathBuf,
 };
 
-use super::Backend;
+use super::{appstream::sort_components_into_categories, Backend};
 
 #[derive(Clone)]
 pub struct FlatpakBackend {
@@ -83,6 +83,32 @@ impl Backend for FlatpakBackend {
         }
     }
 
+    fn get_packages_for_category(&self, category: Category) -> Vec<Package> {
+        let mut components = category.components();
+        if !components.is_empty() {
+            components.clear();
+        }
+        let mut apps = Vec::new();
+
+        let category_array: &[Category] = &[category.clone()];
+
+        sort_components_into_categories(&self.system_pool.components(), &category_array, false);
+        components = category.components();
+
+        for comp in components {
+            let pkg = self.get_package_for_component_id(
+                comp.id()
+                    .map(|x| return x.to_string())
+                    .expect("Expected an ID"),
+            );
+            if pkg.is_some() {
+                apps.push(pkg.expect("Expected a component"));
+            }
+        }
+
+        apps
+    }
+
     fn get_recently_updated_packages(&self, size: usize) -> Vec<Package> {
         let mut apps = Vec::new();
         // We don't want to modify the original list
@@ -98,7 +124,7 @@ impl Backend for FlatpakBackend {
                 .unwrap_or(Ordering::Equal)
         });
 
-        for package in self.package_list.borrow().iter() {
+        for package in packages.iter() {
             if apps.len() < size && package.1.component().kind() == ComponentKind::DesktopApp {
                 apps.push(package.1.clone());
             }
