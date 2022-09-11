@@ -37,6 +37,11 @@ impl Client {
         self.active_backend.get_package_for_component_id(id)
     }
 
+    pub fn get_recently_updated_packages(&self, size: Option<usize>) -> Vec<Package> {
+        self.active_backend
+            .get_recently_updated_packages(size.unwrap_or(20))
+    }
+
     /// Asyncronously refresh the current backend
     pub async fn refresh_cache(&self, force_update: bool) {
         debug!("Updating Cache");

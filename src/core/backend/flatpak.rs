@@ -25,13 +25,14 @@ use crate::{
         utils::{get_file_age, remove_dir_contents, xml::fixup},
     },
 };
-use appstream::{prelude::*, BundleKind, FormatStyle, Pool, PoolFlags};
+use appstream::{prelude::*, BundleKind, ComponentKind, FormatStyle, Pool, PoolFlags};
 use dirs::cache_dir;
 use flatpak::{prelude::*, Installation, Remote};
 use gio::{traits::FileExt, Cancellable, FileMonitor};
+use indexmap::IndexMap;
 use log::{debug, warn};
 use std::{
-    cell::RefCell, collections::HashMap, error::Error, fs::create_dir_all, os::unix::fs::symlink,
+    cell::RefCell, cmp::Ordering, error::Error, fs::create_dir_all, os::unix::fs::symlink,
     path::PathBuf,
 };
 
@@ -39,7 +40,7 @@ use super::Backend;
 
 #[derive(Clone)]
 pub struct FlatpakBackend {
-    package_list: RefCell<HashMap<String, Package>>,
+    package_list: RefCell<IndexMap<String, Package>>,
     user_pool: Pool,
     system_pool: Pool,
     user_metadata: String,
@@ -80,6 +81,18 @@ impl Backend for FlatpakBackend {
         } else {
             return None;
         }
+    }
+
+    fn get_recently_updated_packages(&self, size: usize) -> Vec<Package> {
+        let mut apps = Vec::new();
+
+        for package in self.package_list.borrow().iter() {
+            if apps.len() < size && package.1.component().kind() == ComponentKind::DesktopApp {
+                apps.push(package.1.clone());
+            }
+        }
+
+        apps
     }
 
     fn refresh_cache(&self) {
@@ -131,6 +144,16 @@ impl Backend for FlatpakBackend {
             self.reload_appstream_pool(&self.system_pool, &self.system_metadata)
                 .unwrap();
         }
+
+        // Sort by latest releases
+        self.package_list.borrow_mut().sort_by(|_, p1, _, p2| {
+            let p1_release = p1.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
+            let p2_release = p2.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
+
+            p2_release
+                .partial_cmp(&p1_release)
+                .unwrap_or(Ordering::Equal)
+        });
     }
 }
 
@@ -322,7 +345,7 @@ impl Default for FlatpakBackend {
         system_metadata.push("system");
 
         Self {
-            package_list: RefCell::new(HashMap::new()),
+            package_list: RefCell::new(IndexMap::new()),
             user_pool,
             system_pool,
             user_metadata: String::from(user_metadata.to_str().unwrap()),
