@@ -85,6 +85,18 @@ impl Backend for FlatpakBackend {
 
     fn get_recently_updated_packages(&self, size: usize) -> Vec<Package> {
         let mut apps = Vec::new();
+        // We don't want to modify the original list
+        let mut packages = self.package_list.borrow().clone();
+
+        // Sort by latest releases
+        packages.sort_by(|_, p1, _, p2| {
+            let p1_release = p1.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
+            let p2_release = p2.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
+
+            p2_release
+                .partial_cmp(&p1_release)
+                .unwrap_or(Ordering::Equal)
+        });
 
         for package in self.package_list.borrow().iter() {
             if apps.len() < size && package.1.component().kind() == ComponentKind::DesktopApp {
@@ -144,16 +156,6 @@ impl Backend for FlatpakBackend {
             self.reload_appstream_pool(&self.system_pool, &self.system_metadata)
                 .unwrap();
         }
-
-        // Sort by latest releases
-        self.package_list.borrow_mut().sort_by(|_, p1, _, p2| {
-            let p1_release = p1.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
-            let p2_release = p2.get_latest_release().map(|x| x.timestamp()).unwrap_or(0);
-
-            p2_release
-                .partial_cmp(&p1_release)
-                .unwrap_or(Ordering::Equal)
-        });
     }
 }
 
