@@ -12,6 +12,7 @@ futures = "0.3.24"
 online = "3.0.1"
 dirs = "4.0.0"
 dyn-clone = "1.0.9"
+indexmap = "1.9.1"
 
 [dependencies.adw]
 package = "libadwaita"
