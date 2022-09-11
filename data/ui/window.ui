@@ -44,7 +44,7 @@
                           <object class="CatalogueCarousel" />
                         </child>
                         <child>
-                          <object class="GtkFlowBox" id="featured">
+                          <object class="GtkFlowBox" id="category_box">
                             <property name="max-children-per-line">3</property>
                             <property name="row-spacing">5</property>
                             <property name="column-spacing">5</property>

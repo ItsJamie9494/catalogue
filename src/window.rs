@@ -40,7 +40,7 @@ mod imp {
     #[template(resource = "/dev/itsjamie/Catalogue/window.ui")]
     pub struct CatalogueWindow {
         #[template_child]
-        pub featured: TemplateChild<FlowBox>,
+        pub category_box: TemplateChild<FlowBox>,
 
         #[template_child]
         pub subpage_leaflet: TemplateChild<Leaflet>,
@@ -65,7 +65,7 @@ mod imp {
     impl Default for CatalogueWindow {
         fn default() -> Self {
             Self {
-                featured: TemplateChild::default(),
+                category_box: TemplateChild::default(),
                 subpage_leaflet: TemplateChild::default(),
                 subpage_title: TemplateChild::default(),
                 subpage_content: TemplateChild::default(),
@@ -187,6 +187,6 @@ impl CatalogueWindow {
             leaflet.navigate(NavigationDirection::Forward);
         });
 
-        self.imp().featured.append(&btn);
+        self.imp().category_box.append(&btn);
     }
 }
