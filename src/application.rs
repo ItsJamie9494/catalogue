@@ -25,9 +25,9 @@ use gtk::{
     prelude::*,
 };
 
-use crate::action;
 use crate::config::{APP_ID, PKGDATADIR, PROFILE, VERSION};
 use crate::CatalogueWindow;
+use crate::{action, core::client::Client};
 use log::{debug, info};
 
 mod imp {
@@ -125,6 +125,10 @@ impl CatalogueApplication {
         self.imp().window.get().unwrap().upgrade().unwrap()
     }
 
+    pub fn client(&self) -> Client {
+        self.imp().client.clone()
+    }
+
     fn setup_gactions(&self) {
         action!(
             self,
@@ -175,5 +179,14 @@ impl CatalogueApplication {
         info!("Datadir: {}", PKGDATADIR);
 
         ApplicationExtManual::run(self);
+    }
+}
+
+impl Default for CatalogueApplication {
+    fn default() -> Self {
+        gio::Application::default()
+            .unwrap()
+            .downcast::<CatalogueApplication>()
+            .unwrap()
     }
 }
