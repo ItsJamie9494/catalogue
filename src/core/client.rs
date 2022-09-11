@@ -18,6 +18,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+use appstream::Category;
 use log::{debug, warn};
 
 use super::{
@@ -35,6 +36,10 @@ pub struct Client {
 impl Client {
     pub fn get_package_for_component_id(&self, id: String) -> Option<Package> {
         self.active_backend.get_package_for_component_id(id)
+    }
+
+    pub fn get_packages_for_category(&self, category: Category) -> Vec<Package> {
+        self.active_backend.get_packages_for_category(category)
     }
 
     pub fn get_recently_updated_packages(&self, size: Option<usize>) -> Vec<Package> {
