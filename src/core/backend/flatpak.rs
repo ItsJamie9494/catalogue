@@ -37,6 +37,7 @@ use std::{
 
 use super::Backend;
 
+#[derive(Clone)]
 pub struct FlatpakBackend {
     package_list: RefCell<HashMap<String, Package>>,
     user_pool: Pool,

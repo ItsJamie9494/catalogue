@@ -25,6 +25,9 @@ use super::{
     package::Package,
 };
 
+dyn_clone::clone_trait_object!(Backend);
+
+#[derive(Clone)]
 pub struct Client {
     active_backend: Box<dyn Backend>,
 }

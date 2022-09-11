@@ -19,10 +19,11 @@
  */
 
 use super::package::Package;
+use dyn_clone::DynClone;
 
 pub mod flatpak;
 
-pub trait Backend {
+pub trait Backend: DynClone {
     fn get_package_for_component_id(&self, id: String) -> Option<Package>;
     fn refresh_cache(&self);
 }
