@@ -87,7 +87,7 @@ mod imp {
                             .get::<String>()
                             .expect("The value needs to be of type `String`"),
                     ));
-                },
+                }
                 "version" => {
                     self.version.replace(Some(
                         value
@@ -234,13 +234,18 @@ impl Package {
 
     // Max releases is needed for determining Installed, but since we don't check that yet,
     // it's not needed
-    pub fn get_newest_releases (&self, min_releases: usize, _max_releases: usize) -> Vec<Release> {
+    pub fn get_newest_releases(&self, min_releases: usize, _max_releases: usize) -> Vec<Release> {
         let mut list: Vec<Release> = Vec::new();
         let mut releases = self.imp().component.borrow().releases();
 
         for rel in releases.clone().iter() {
             if rel.version().is_none() {
-                releases.remove(releases.iter().position(|x| x == rel).expect("Expected a Release"));
+                releases.remove(
+                    releases
+                        .iter()
+                        .position(|x| x == rel)
+                        .expect("Expected a Release"),
+                );
             }
         }
 
@@ -268,7 +273,7 @@ impl Package {
         list
     }
 
-    pub fn get_latest_release (&self) -> Option<Release> {
+    pub fn get_latest_release(&self) -> Option<Release> {
         let mut releases = self.imp().component.borrow().releases();
         releases.sort_by(|a, b| {
             if a.version().is_none() || b.version().is_none() {
