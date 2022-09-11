@@ -17,14 +17,15 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 use adw::subclass::prelude::*;
 use adw::NavigationDirection;
 use appstream::prelude::*;
 use appstream::Category;
 use gtk::{gio, glib, prelude::*, CompositeTemplate};
 
+use crate::application::CatalogueApplication;
 use crate::config::{APP_ID, PROFILE};
+use crate::widgets::app_tile::AppTile;
 use crate::widgets::category_page::CategoryPage;
 use crate::widgets::category_tile::CategoryTile;
 
@@ -41,6 +42,9 @@ mod imp {
     pub struct CatalogueWindow {
         #[template_child]
         pub category_box: TemplateChild<FlowBox>,
+
+        #[template_child]
+        pub recent_box: TemplateChild<FlowBox>,
 
         #[template_child]
         pub subpage_leaflet: TemplateChild<Leaflet>,
@@ -66,6 +70,7 @@ mod imp {
         fn default() -> Self {
             Self {
                 category_box: TemplateChild::default(),
+                recent_box: TemplateChild::default(),
                 subpage_leaflet: TemplateChild::default(),
                 subpage_title: TemplateChild::default(),
                 subpage_content: TemplateChild::default(),
@@ -105,6 +110,7 @@ mod imp {
             obj.load_category_tile(CatalogueCategories::default().develop);
             obj.load_category_tile(CatalogueCategories::default().accessories);
 
+            obj.load_recent_box();
             obj.load_window_size();
         }
     }
@@ -188,5 +194,15 @@ impl CatalogueWindow {
         });
 
         self.imp().category_box.append(&btn);
+    }
+
+    fn load_recent_box(&self) {
+        let client = CatalogueApplication::client(&CatalogueApplication::default());
+        let packages = client.get_recently_updated_packages(Some(12));
+
+        for pkg in packages.iter() {
+            let btn = AppTile::new(pkg.clone());
+            self.imp().recent_box.append(&btn);
+        }
     }
 }
