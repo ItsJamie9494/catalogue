@@ -110,4 +110,8 @@ impl CategoryPage {
     pub fn new(category: Category) -> Self {
         Object::new(&[("category", &category)]).expect("Failed to create CategoryPage")
     }
+
+    pub fn category(&self) -> Category {
+        self.imp().category.borrow().clone()
+    }
 }
