@@ -61,8 +61,7 @@ mod imp {
             scrolled.set_child(Some(&clamp));
             let content = Box::builder()
                 .valign(Align::Start)
-                .halign(Align::Center)
-                .hexpand(false)
+                .hexpand(true)
                 .orientation(Orientation::Vertical)
                 .margin_top(24)
                 .margin_bottom(36)

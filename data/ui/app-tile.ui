@@ -21,6 +21,9 @@
                 <child>
                     <object class="GtkImage" id="icon">
                         <property name="pixel_size">24</property>
+                        <style>
+                            <class name="lowres-icon" />
+                        </style>
                     </object>
                 </child>
                 <child>
