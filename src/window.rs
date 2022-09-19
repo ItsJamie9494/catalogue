@@ -21,6 +21,7 @@ use adw::subclass::prelude::*;
 use adw::NavigationDirection;
 use appstream::prelude::*;
 use appstream::Category;
+use appstream::ComponentKind;
 use gtk::{gio, glib, prelude::*, CompositeTemplate};
 
 use crate::application::CatalogueApplication;
@@ -28,10 +29,11 @@ use crate::config::{APP_ID, PROFILE};
 use crate::widgets::app_tile::AppTile;
 use crate::widgets::category_page::CategoryPage;
 use crate::widgets::category_tile::CategoryTile;
+use crate::widgets::installed_row::InstalledRow;
 
 mod imp {
     use adw::{Leaflet, WindowTitle};
-    use gtk::{gio::Settings, template_callbacks, Box, Button, FlowBox};
+    use gtk::{gio::Settings, template_callbacks, Box, Button, FlowBox, ListBox};
 
     use crate::core::category::CatalogueCategories;
 
@@ -45,6 +47,9 @@ mod imp {
 
         #[template_child]
         pub recent_box: TemplateChild<FlowBox>,
+
+        #[template_child]
+        pub installed_box: TemplateChild<ListBox>,
 
         #[template_child]
         pub subpage_leaflet: TemplateChild<Leaflet>,
@@ -71,6 +76,7 @@ mod imp {
             Self {
                 category_box: TemplateChild::default(),
                 recent_box: TemplateChild::default(),
+                installed_box: TemplateChild::default(),
                 subpage_leaflet: TemplateChild::default(),
                 subpage_title: TemplateChild::default(),
                 subpage_content: TemplateChild::default(),
@@ -111,6 +117,7 @@ mod imp {
             obj.load_category_tile(&CatalogueCategories::default().accessories);
 
             obj.load_recent_box();
+            obj.load_installed_apps();
             obj.load_window_size();
         }
     }
@@ -203,6 +210,41 @@ impl CatalogueWindow {
         for pkg in &packages {
             let btn = AppTile::new(pkg);
             self.imp().recent_box.append(&btn);
+        }
+    }
+
+    fn load_installed_apps(&self) {
+        self.imp().installed_box.set_sort_func(|r1, r2| {
+            match r1
+                .first_child()
+                .expect("Expected a Row")
+                .downcast::<InstalledRow>()
+                .expect("Expected an InstalledRow")
+                .package()
+                .name()
+                .cmp(
+                    &r2.first_child()
+                        .expect("Expected a Row")
+                        .downcast::<InstalledRow>()
+                        .expect("Expected an InstalledRow")
+                        .package()
+                        .name(),
+                ) {
+                // There is some serious bullshit naming going on here
+                std::cmp::Ordering::Less => gtk::Ordering::Smaller,
+                std::cmp::Ordering::Equal => gtk::Ordering::Equal,
+                std::cmp::Ordering::Greater => gtk::Ordering::Larger,
+            }
+        });
+
+        let client = CatalogueApplication::client(&CatalogueApplication::default());
+        let packages = client.get_installed_packages();
+
+        for pkg in &packages {
+            let row = InstalledRow::new(pkg);
+            if pkg.component().kind() == ComponentKind::DesktopApp {
+                self.imp().installed_box.append(&row);
+            }
         }
     }
 }

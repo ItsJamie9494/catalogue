@@ -91,8 +91,15 @@
                     <property name="title" translatable="yes">Installed</property>
                     <property name="icon-name">view-list-symbolic</property>
                     <property name="child">
-                      <object class="GtkLabel">
-                        <property name="label">nya!</property>
+                      <object class="CataloguePage">
+                        <child>
+                          <object class="GtkListBox" id="installed_box">
+                            <property name="hexpand">true</property>
+                            <style>
+                              <class name="boxed-list" />
+                            </style>
+                          </object>
+                        </child>
                       </object>
                     </property>
                   </object>
