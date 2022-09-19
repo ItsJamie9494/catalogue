@@ -29,5 +29,6 @@ pub trait Backend: DynClone {
     fn get_package_for_component_id(&self, id: String) -> Option<Package>;
     fn get_packages_for_category(&self, category: Category) -> Vec<Package>;
     fn get_recently_updated_packages(&self, size: usize) -> Vec<Package>;
+    fn get_installed_packages(&self) -> Vec<Package>;
     fn refresh_cache(&self);
 }

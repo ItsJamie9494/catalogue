@@ -27,8 +27,8 @@ use crate::{
 };
 use appstream::{prelude::*, BundleKind, Category, ComponentKind, FormatStyle, Pool, PoolFlags};
 use dirs::cache_dir;
-use flatpak::{prelude::*, Installation, Remote};
-use gio::{traits::FileExt, Cancellable, FileMonitor};
+use flatpak::{prelude::*, Installation, InstalledRef, Remote};
+use gio::{prelude::*, Cancellable, FileMonitor};
 use indexmap::IndexMap;
 use log::{debug, warn};
 use std::{
@@ -152,7 +152,7 @@ impl Backend for FlatpakBackend {
             );
             self.preprocess_appstream_metadata(false, &remotes);
 
-            self.reload_appstream_pool(&self.user_pool, &self.user_metadata)
+            self.reload_appstream_pool(false, &self.user_pool, &self.user_metadata)
                 .unwrap();
         }
 
@@ -173,14 +173,70 @@ impl Backend for FlatpakBackend {
             );
             self.preprocess_appstream_metadata(true, &remotes);
 
-            self.reload_appstream_pool(&self.system_pool, &self.system_metadata)
+            self.reload_appstream_pool(true, &self.system_pool, &self.system_metadata)
                 .unwrap();
         }
+    }
+
+    fn get_installed_packages(&self) -> Vec<Package> {
+        let mut apps = Vec::new();
+        if self.user_installation.is_none() && self.system_installation.is_none() {
+            warn!("No flatpak installations");
+        } else {
+            if let Some(installation) = self.user_installation.as_ref() {
+                let refs = installation
+                    .list_installed_refs(Some(&self.cancellable))
+                    .expect("Unable to get installed refs");
+                apps.append(&mut self.get_installed_packages_from_ref(false, &refs));
+            }
+            if let Some(installation) = self.system_installation.as_ref() {
+                let refs = installation
+                    .list_installed_refs(Some(&self.cancellable))
+                    .expect("Unable to get installed refs");
+                apps.append(&mut self.get_installed_packages_from_ref(true, &refs));
+            }
+        }
+
+        apps
     }
 }
 
 impl FlatpakBackend {
-    fn reload_appstream_pool(&self, pool: &Pool, metadata: &str) -> Result<(), Box<dyn Error>> {
+    fn get_installed_packages_from_ref(&self, system: bool, refs: &[InstalledRef]) -> Vec<Package> {
+        let mut apps = Vec::new();
+
+        // Ref is a reserved keyword
+        for app in refs {
+            if self.cancellable.is_cancelled() {
+                break;
+            }
+
+            let bundle_id = Self::generate_package_list_key(
+                system,
+                &app.origin()
+                    .map(|s| s.to_string())
+                    .expect("Expected a string"),
+                &app.format_ref()
+                    .map(|s| s.to_string())
+                    .expect("Expected a string"),
+            );
+            let list = self.package_list.borrow();
+            let package = list.get_key_value(&bundle_id);
+            match package {
+                Some(pkg) => apps.push(pkg.1.clone()),
+                None => warn!("Failed to find bundle with ID {:?}", bundle_id),
+            }
+        }
+
+        apps
+    }
+
+    fn reload_appstream_pool(
+        &self,
+        system: bool,
+        pool: &Pool,
+        metadata: &str,
+    ) -> Result<(), Box<dyn Error>> {
         pool.reset_extra_data_locations();
         pool.add_extra_data_location(metadata, FormatStyle::Collection);
 
@@ -191,7 +247,7 @@ impl FlatpakBackend {
             match bundle {
                 Some(bundle) => {
                     let key = Self::generate_package_list_key(
-                        false,
+                        system,
                         &comp
                             .origin()
                             .map(|x| x.to_string())
